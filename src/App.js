@@ -251,6 +251,11 @@ function MovieDetails({ selectId, onClose, onAddWatch, watched }) {
     Genre: genre,
   } = movie;
 
+  useEffect(() => {
+    if (!title) return;
+    document.title = `Movie | ${title}`;
+  }, [title]);
+
   return (
     <div className="details">
       {isLoading ? (
