@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 import { useMovies } from "./useMovies";
+import { useLocalStorageState } from "./useLocalStorageState";
+import { useKey } from "./useKey";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -10,14 +12,8 @@ const KEY = "f716247e";
 export default function App() {
   const [query, setQuery] = useState("");
   const [selectId, setSelectId] = useState(null);
-  // const [watched, setWatched] = useState([]);
-  // Intial Callback Funtion in UseState that will execute on only in intial render
-  const [watched, setWatched] = useState(function () {
-    const storedMovies = localStorage.getItem("watched");
-    return JSON.parse(storedMovies) || [];
-  });
-
-  const {movies , error , isLoading} = useMovies(query , KEY)
+  const [watched, setWatched] = useLocalStorageState([], "watched");
+  const { movies, error, isLoading } = useMovies(query, KEY);
 
   function handleSelectedMovie(id) {
     setSelectId((selectId) => (id === selectId ? null : id));
@@ -34,15 +30,6 @@ export default function App() {
   function handleDeleteMovie(id) {
     setWatched((watched) => watched.filter((mov) => mov.imdbID !== id));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
-
- 
 
   return (
     <>
@@ -110,22 +97,12 @@ function Logo() {
 function Search({ query, setQuery }) {
   const inputEl = useRef(null);
 
-  useEffect(() => {
-    inputEl.current.focus();
-
-    function callback(e) {
-      if (document.activeElement === inputEl.current) return;
-
-      if (e.code === "Enter") {
-        inputEl.current.focus();
-        setQuery("");
-      }
-    }
-
-    document.addEventListener("keydown", callback);
-
-    return () => document.removeEventListener("keydown", callback);
-  }, [setQuery]);
+  useKey('Enter' , function () {
+    if (document.activeElement === inputEl.current) return;
+      inputEl.current.focus();
+      setQuery("");
+  })
+  
   return (
     <input
       className="search"
@@ -256,21 +233,7 @@ function MovieDetails({ selectId, onClose, onAddWatch, watched }) {
     };
   }, [title]);
 
-  useEffect(
-    function () {
-      function callback(e) {
-        if (e.code === "Escape") {
-          onClose();
-        }
-      }
-      document.addEventListener("keydown", callback);
-
-      return () => {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [onClose]
-  );
+  useKey("Escape", onClose);
   return (
     <div className="details">
       {isLoading ? (
